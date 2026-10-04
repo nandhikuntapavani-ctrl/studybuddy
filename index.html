@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyBuddy — Pomodoro, Flashcards & Quiz Mastery</title>
+  <meta name="description" content="All-in-one smart study app with customizable Pomodoro timer, 3D interactive flashcards, procedural focus sounds, and custom quiz arena.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark-indigo">
+
+  <!-- Confetti Canvas for Celebrations -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-container">
+
+    <!-- Header Navigation Bar -->
+    <header class="header-bar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>StudyBuddy</h1>
+          <p>Focus • Retain • Master</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Daily Streak Pill -->
+        <div class="streak-pill" id="streak-pill" title="Consecutive days studied">
+          <span class="fire-icon">🔥</span>
+          <span id="streak-count">1</span> <span style="font-size:0.75rem; color:var(--text-secondary);">Day</span>
+        </div>
+
+        <!-- Quick Theme Toggle -->
+        <button class="header-btn" id="theme-btn" title="Cycle Color Theme" aria-label="Change Theme">
+          🎨
+        </button>
+
+        <!-- Settings Button -->
+        <button class="header-btn" id="open-settings-btn" title="Customize Settings" aria-label="Settings">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation" role="tablist">
+      <button class="tab-btn active" data-tab="pomodoro" id="tab-pomodoro" role="tab" aria-selected="true">
+        <span>⏱️</span> Pomodoro
+      </button>
+      <button class="tab-btn" data-tab="flashcards" id="tab-flashcards" role="tab" aria-selected="false">
+        <span>🗂️</span> Flashcards
+      </button>
+      <button class="tab-btn" data-tab="quiz" id="tab-quiz" role="tab" aria-selected="false">
+        <span>🎯</span> Quiz Arena
+      </button>
+      <button class="tab-btn" data-tab="stats" id="tab-stats" role="tab" aria-selected="false">
+        <span>📊</span> Stats
+      </button>
+    </nav>
+
+
+    <!-- ========================================================
+         TAB 1: POMODORO TIMER
+    ======================================================== -->
+    <main class="tab-panel active" id="panel-pomodoro">
+      <section class="pomodoro-container">
+        
+        <!-- Mode Switcher -->
+        <div class="timer-mode-selector" role="group" aria-label="Timer Modes">
+          <button class="mode-btn active focus-mode" data-mode="focus">🎯 Focus</button>
+          <button class="mode-btn short-break" data-mode="shortBreak">☕ Short Break</button>
+          <button class="mode-btn long-break" data-mode="longBreak">🌴 Long Break</button>
+        </div>
+
+        <!-- SVG Circular Countdown Dial -->
+        <div class="timer-dial-card">
+          <div class="timer-svg-wrapper">
+            <svg class="timer-svg" viewBox="0 0 280 280">
+              <!-- Background Ring -->
+              <circle class="timer-circle-bg" cx="140" cy="140" r="125"></circle>
+              <!-- Animated Progress Ring -->
+              <circle class="timer-circle-progress" id="timer-progress-ring" cx="140" cy="140" r="125"></circle>
+            </svg>
+            
+            <div class="timer-center-content">
+              <span class="timer-label" id="timer-mode-label">FOCUS TIME</span>
+              <div class="timer-digits" id="timer-display">25:00</div>
+              
+              <!-- 4 Dots Cycle Indicator -->
+              <div class="pomodoro-cycle-dots" id="pomodoro-cycle-dots">
+                <span class="cycle-dot current" title="Cycle 1"></span>
+                <span class="cycle-dot" title="Cycle 2"></span>
+                <span class="cycle-dot" title="Cycle 3"></span>
+                <span class="cycle-dot" title="Cycle 4"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Minute Offset (+5m / -5m) -->
+          <div class="timer-quick-adjust">
+            <button class="adjust-btn" id="adjust-minus-5" title="Subtract 5 Minutes">-5 min</button>
+            <button class="adjust-btn" id="adjust-plus-5" title="Add 5 Minutes">+5 min</button>
+          </div>
+
+          <!-- Main Controls -->
+          <div class="timer-controls">
+            <button class="control-btn-icon" id="timer-reset-btn" title="Reset Timer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8"/>
+                <path d="M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/>
+              </svg>
+            </button>
+
+            <button class="btn-primary-action" id="timer-toggle-btn">
+              <svg id="play-pause-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="timer-toggle-text">Start Focus</span>
+            </button>
+
+            <button class="control-btn-icon" id="timer-skip-btn" title="Skip to Next Mode">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                <line x1="19" y1="5" x2="19" y2="19"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Current Focus Task Input -->
+        <div class="focus-task-card">
+          <input type="checkbox" id="task-completed-check" class="focus-task-checkbox" title="Mark task completed">
+          <input type="text" id="focus-task-input" class="focus-task-input" placeholder="What are you focusing on this session? (e.g. Master React Hooks)" value="Studying for upcoming test">
+        </div>
+
+        <!-- Procedural Ambient Focus Sound Dock -->
+        <div class="ambient-dock-card">
+          <div class="ambient-dock-header">
+            <div class="ambient-title">
+              <span>🎧</span> Ambient Focus Generator (Procedural Audio)
+            </div>
+            <div class="ambient-slider-wrap">
+              <span>Vol</span>
+              <input type="range" min="0" max="100" value="50" class="ambient-slider" id="ambient-vol-slider" title="Ambient Volume">
+            </div>
+          </div>
+          
+          <div class="ambient-chips-grid">
+            <button class="ambient-chip" data-ambient="rain">
+              <span class="chip-icon">🌧️</span>
+              <span>Gentle Rain</span>
+            </button>
+            <button class="ambient-chip" data-ambient="whitenoise">
+              <span class="chip-icon">📻</span>
+              <span>Pink Noise</span>
+            </button>
+            <button class="ambient-chip" data-ambient="focus40hz">
+              <span class="chip-icon">⚡</span>
+              <span>40Hz Gamma</span>
+            </button>
+            <button class="ambient-chip" data-ambient="campfire">
+              <span class="chip-icon">🔥</span>
+              <span>Campfire</span>
+            </button>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+
+    <!-- ========================================================
+         TAB 2: FLASHCARDS
+    ======================================================== -->
+    <section class="tab-panel" id="panel-flashcards">
+      <div class="flashcards-container">
+        
+        <!-- Flashcard Header Bar -->
+        <div class="fc-header-bar">
+          <div class="fc-deck-selector-wrap">
+            <select id="deck-selector" class="deck-select-dropdown" aria-label="Select Deck"></select>
+            <button class="btn-secondary" id="open-new-deck-modal-btn">➕ New Deck</button>
+            <button class="btn-secondary" id="delete-deck-btn" title="Delete current deck">🗑️</button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <button class="btn-secondary" id="shuffle-deck-btn" title="Shuffle flashcards">🔀 Shuffle</button>
+            <div class="fc-mode-toggle">
+              <button class="fc-mode-btn active" id="fc-view-study-btn">Study</button>
+              <button class="fc-mode-btn" id="fc-view-editor-btn">Manage</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D STUDY STAGE VIEW -->
+        <div id="fc-study-mode-container">
+          <!-- 3D Flip Card -->
+          <div class="flashcard-stage" id="flashcard-element" tabindex="0" role="button" aria-label="Flashcard. Click or press Space to flip.">
+            <div class="flashcard-inner">
+              
+              <!-- Front Face (Question) -->
+              <div class="card-face card-front">
+                <div class="card-top-meta">
+                  <span class="card-tag" id="card-front-tag">QUESTION</span>
+                  <div class="card-flip-prompt">
+                    <span>🔄 Click or Space to flip</span>
+                  </div>
+                </div>
+                <div class="card-body-text">
+                  <h3 class="card-front-title" id="card-front-text">What is a Closure in JavaScript?</h3>
+                </div>
+                <div class="card-footer-meta">
+                  <span id="card-index-indicator">Card 1 of 6</span>
+                  <span id="card-mastery-status" style="color:var(--text-muted);">Not Mastered</span>
+                </div>
+              </div>
+
+              <!-- Back Face (Answer) -->
+              <div class="card-face card-back">
+                <div class="card-top-meta">
+                  <span class="card-tag" id="card-back-tag" style="color:#6ee7b7; background:rgba(16,185,129,0.15);">ANSWER</span>
+                  <div class="card-flip-prompt">
+                    <span>🔄 Click or Space to flip back</span>
+                  </div>
+                </div>
+                <div class="card-body-text">
+                  <p class="card-back-answer" id="card-back-text">An inner function that retains access to its parent scope even after the parent function has closed.</p>
+                </div>
+                <div class="card-footer-meta">
+                  <span>💡 Tip: Rate your recall below</span>
+                  <span style="color:#a855f7;">✨ Active Recall</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Controls & Assessment Bar -->
+          <div class="fc-study-controls">
+            <!-- Progress Bar -->
+            <div class="fc-progress-bar-container">
+              <span class="fc-progress-text" id="deck-progress-summary">Card 1/6 (0% Mastered)</span>
+              <div class="fc-progress-track">
+                <div class="fc-progress-fill" id="deck-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="fc-action-buttons">
+              <button class="fc-rate-btn btn-learning" id="card-rate-learning-btn" title="Press Left Arrow">
+                <span>🔴</span> Still Learning (←)
+              </button>
+              <button class="fc-rate-btn btn-flip-action" id="card-manual-flip-btn">
+                <span>🔄</span> Flip Card (Space)
+              </button>
+              <button class="fc-rate-btn btn-mastered" id="card-rate-mastered-btn" title="Press Right Arrow">
+                <span>🟢</span> Mastered (→)
+              </button>
+            </div>
+
+            <!-- Previous / Next Card Navigation Buttons -->
+            <div style="display:flex; justify-content:space-between; margin-top:0.4rem;">
+              <button class="btn-secondary" id="card-prev-btn" style="flex:1; max-width:140px;">⬅️ Previous</button>
+              <button class="btn-secondary" id="card-reset-status-btn" style="font-size:0.78rem;">Reset Deck Status</button>
+              <button class="btn-secondary" id="card-next-btn" style="flex:1; max-width:140px;">Next ➡️</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGE & EDIT CARDS VIEW -->
+        <div class="fc-editor-view" id="fc-editor-mode-container">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="font-size:1.15rem; font-weight:700;">Manage Cards in Deck</h3>
+            <span id="editor-deck-title" style="color:var(--accent-primary); font-weight:600;"></span>
+          </div>
+
+          <!-- Add New Card Form -->
+          <form class="fc-add-card-form" id="add-card-form">
+            <h4 style="font-size:0.92rem; font-weight:600;">➕ Add New Card to this Deck</h4>
+            <div class="form-row">
+              <input type="text" id="new-card-front" class="form-input" placeholder="Front: Question or Term (Required)" required>
+              <input type="text" id="new-card-tag" class="form-input" style="max-width:180px;" placeholder="Tag (e.g. Science, Bio)">
+            </div>
+            <textarea id="new-card-back" class="form-textarea" rows="2" placeholder="Back: Detailed Answer or Definition (Required)" required></textarea>
+            <div style="display:flex; justify-content:flex-end;">
+              <button type="submit" class="btn-primary-action" style="padding:0.5rem 1.4rem; font-size:0.9rem;">
+                Add Card
+              </button>
+            </div>
+          </form>
+
+          <!-- Search & Filter Existing Cards -->
+          <div style="margin-bottom:0.75rem;">
+            <input type="text" id="card-search-input" class="form-input" placeholder="🔍 Search cards in this deck...">
+          </div>
+
+          <!-- Cards List -->
+          <div class="cards-table-list" id="cards-editor-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================================
+         TAB 3: QUIZ ARENA
+    ======================================================== -->
+    <section class="tab-panel" id="panel-quiz">
+      <div class="quiz-container">
+        
+        <!-- Quiz Hub / Launcher View -->
+        <div id="quiz-hub-view">
+          <div style="margin-bottom:1.25rem;">
+            <h2 style="font-family:var(--font-display); font-size:1.5rem; font-weight:700;">Quiz Arena</h2>
+            <p style="color:var(--text-secondary); font-size:0.9rem;">Test your recall with instant dynamic quizzes from your flashcards or custom question sets.</p>
+          </div>
+
+          <div class="quiz-hub-grid">
+            <!-- Option 1: Instant Quiz From Flashcards -->
+            <div class="quiz-card">
+              <div>
+                <span class="quiz-card-badge">⚡ Instant Generator</span>
+                <h3 class="quiz-card-title">Flashcard Challenge</h3>
+                <p class="quiz-card-desc">Automatically turns your current flashcards into an interactive multiple-choice quiz with smart distractors.</p>
+                
+                <div style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                  <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Choose Deck:</label>
+                  <select id="quiz-deck-picker" class="deck-select-dropdown" style="max-width:100%;"></select>
+                </div>
+              </div>
+
+              <button class="btn-primary-action" id="start-flashcard-quiz-btn" style="justify-content:center;">
+                Start Deck Quiz 🚀
+              </button>
+            </div>
+
+            <!-- Option 2: Prebuilt Mastery Quiz -->
+            <div class="quiz-card">
+              <div>
+                <span class="quiz-card-badge" style="color:#6ee7b7; background:rgba(16,185,129,0.15);">🧠 Study Mastery</span>
+                <h3 class="quiz-card-title">Cognitive Science Quiz</h3>
+                <p class="quiz-card-desc">Test your understanding of high-efficiency study techniques, spaced repetition, and habit formation.</p>
+              </div>
+
+              <button class="btn-primary-action" id="start-mastery-quiz-btn" style="justify-content:center; background:linear-gradient(135deg, #10b981, #06b6d4);">
+                Play Science Quiz 🎯
+              </button>
+            </div>
+
+            <!-- Option 3: Custom Quiz Creator -->
+            <div class="quiz-card" style="border:1px dashed var(--border-subtle); background:var(--bg-surface);">
+              <div>
+                <span class="quiz-card-badge" style="color:#f59e0b; background:rgba(245,158,11,0.15);">✏️ Builder</span>
+                <h3 class="quiz-card-title">Create Custom Quiz</h3>
+                <p class="quiz-card-desc">Write your own multiple-choice questions with 4 options and custom explanations.</p>
+              </div>
+
+              <button class="btn-secondary" id="open-quiz-builder-modal-btn" style="justify-content:center; padding:0.85rem;">
+                ➕ Build New Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Quiz Player View -->
+        <div class="quiz-player-view" id="quiz-player-view">
+          <div class="quiz-top-status">
+            <span class="quiz-counter" id="quiz-question-number">Question 1 of 5</span>
+            <span class="quiz-score-live" id="quiz-live-score">Score: 0 / 0</span>
+          </div>
+
+          <div class="quiz-progress-track">
+            <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%;"></div>
+          </div>
+
+          <div class="quiz-question-box">
+            <h3 class="quiz-question-text" id="quiz-active-question">Which of the following has been proven most effective for long-term retention?</h3>
+          </div>
+
+          <!-- Options Grid -->
+          <div class="quiz-options-grid" id="quiz-options-grid">
+            <!-- 4 Options dynamically injected -->
+          </div>
+
+          <!-- Explanation Box -->
+          <div class="quiz-explanation-box" id="quiz-explanation-box">
+            <strong id="quiz-explanation-title">💡 Explanation</strong>
+            <p id="quiz-explanation-text"></p>
+          </div>
+
+          <!-- Next Button -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+            <button class="btn-secondary" id="quiz-quit-btn">Quit Quiz</button>
+            <button class="btn-primary-action" id="quiz-next-btn" style="display:none; padding:0.65rem 1.6rem;">
+              Next Question ➡️
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Results & Review View -->
+        <div class="quiz-results-view" id="quiz-results-view">
+          <div class="results-score-circle">
+            <span class="score-num" id="results-score-percentage">100%</span>
+            <span class="score-lbl">Score</span>
+          </div>
+
+          <h2 class="results-title" id="results-headline">Outstanding Job! 🏆</h2>
+          <p class="results-desc" id="results-subtitle">You demonstrated a complete grasp of this subject material.</p>
+
+          <!-- Review List -->
+          <h4 style="font-size:0.92rem; font-weight:600; align-self:flex-start;">Question Breakdown:</h4>
+          <div class="results-review-list" id="results-review-list">
+            <!-- Injected -->
+          </div>
+
+          <div style="display:flex; gap:1rem; margin-top:1rem; width:100%; justify-content:center;">
+            <button class="btn-secondary" id="results-back-hub-btn">Back to Quiz Hub</button>
+            <button class="btn-primary-action" id="results-retake-btn">Retake Quiz 🔄</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================================
+         TAB 4: STATS & ACHIEVEMENTS
+    ======================================================== -->
+    <section class="tab-panel" id="panel-stats">
+      <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        
+        <div>
+          <h2 style="font-family:var(--font-display); font-size:1.5rem; font-weight:700;">Study Progress & Statistics</h2>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Your daily momentum and mastery tracker.</p>
+        </div>
+
+        <div class="stats-grid">
+          <!-- Total Focus Minutes -->
+          <div class="stat-metric-card">
+            <div class="stat-icon-wrap" style="background:rgba(99,102,241,0.15); color:#818cf8;">⏱️</div>
+            <div>
+              <div class="stat-val" id="stats-total-minutes">0</div>
+              <div class="stat-label">Total Focus Minutes</div>
+            </div>
+          </div>
+
+          <!-- Pomodoros Completed -->
+          <div class="stat-metric-card">
+            <div class="stat-icon-wrap" style="background:rgba(16,185,129,0.15); color:#34d399;">🍅</div>
+            <div>
+              <div class="stat-val" id="stats-total-pomodoros">0</div>
+              <div class="stat-label">Pomodoros Finished</div>
+            </div>
+          </div>
+
+          <!-- Flashcards Mastered -->
+          <div class="stat-metric-card">
+            <div class="stat-icon-wrap" style="background:rgba(245,158,11,0.15); color:#fbbf24;">🗂️</div>
+            <div>
+              <div class="stat-val" id="stats-cards-mastered">0</div>
+              <div class="stat-label">Flashcards Mastered</div>
+            </div>
+          </div>
+
+          <!-- Quizzes Completed -->
+          <div class="stat-metric-card">
+            <div class="stat-icon-wrap" style="background:rgba(236,72,153,0.15); color:#f472b6;">🎯</div>
+            <div>
+              <div class="stat-val" id="stats-quizzes-taken">0</div>
+              <div class="stat-label">Quizzes Completed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Study Habit Advice Box -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:1.5rem; backdrop-filter:blur(16px);">
+          <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.6rem; display:flex; align-items:center; gap:0.5rem;">
+            💡 Study Habit Tip
+          </h3>
+          <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6;">
+            "The brain consolidates neural connections during breaks and sleep. Pair 25-minute Pomodoro sessions with immediate flashcard testing (Active Recall) to double your retention rate in half the time."
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+  </div> <!-- End .app-container -->
+
+
+  <!-- ========================================================
+       MODAL: SETTINGS & PREFERENCES
+  ======================================================== -->
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="settings-title">⚙️ App Settings</h3>
+        <button class="modal-close-btn" id="close-settings-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Pomodoro Time Settings -->
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Focus Session (Minutes)</h4>
+          <p>Standard work interval duration</p>
+        </div>
+        <input type="number" id="setting-focus-time" class="setting-input-number" min="1" max="120" value="25">
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Short Break (Minutes)</h4>
+          <p>Quick rest between focus blocks</p>
+        </div>
+        <input type="number" id="setting-short-break" class="setting-input-number" min="1" max="30" value="5">
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Long Break (Minutes)</h4>
+          <p>Extended restorative break</p>
+        </div>
+        <input type="number" id="setting-long-break" class="setting-input-number" min="1" max="60" value="15">
+      </div>
+
+      <!-- Sound Settings -->
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Alarm Sound</h4>
+          <p>Tone played when timer finishes</p>
+        </div>
+        <select id="setting-sound-tone" class="deck-select-dropdown" style="width:140px;">
+          <option value="tibetan">Tibetan Bowl</option>
+          <option value="crystal">Crystal Bell</option>
+          <option value="digital">Digital Beep</option>
+          <option value="marimba">Warm Marimba</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Sound Alert Volume</h4>
+          <p>Master chime loudness</p>
+        </div>
+        <input type="range" id="setting-volume-slider" min="0" max="100" value="75" class="ambient-slider" style="width:120px;">
+      </div>
+
+      <!-- Visual Theme -->
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <h4>Visual Theme</h4>
+          <p>Color aesthetic</p>
+        </div>
+        <select id="setting-theme-select" class="deck-select-dropdown" style="width:140px;">
+          <option value="dark-indigo">Dark Indigo</option>
+          <option value="cyber">Cyber Dark</option>
+          <option value="sunset">Sunset Warm</option>
+          <option value="light">Paper Light</option>
+        </select>
+      </div>
+
+      <!-- Data Backup & Reset -->
+      <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.6rem;">
+        <h4 style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">Data & Backup</h4>
+        <div style="display:flex; gap:0.6rem;">
+          <button class="btn-secondary" id="export-data-btn" style="flex:1;">⬇️ Export JSON</button>
+          <button class="btn-secondary" id="import-data-btn" style="flex:1;">⬆️ Import JSON</button>
+          <input type="file" id="import-file-input" style="display:none;" accept=".json">
+        </div>
+        <button class="btn-secondary" id="reset-defaults-btn" style="color:#f87171; border-color:rgba(239,68,68,0.3); margin-top:0.5rem;">
+          🔄 Restore Default Sample Data
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       MODAL: CREATE NEW DECK
+  ======================================================== -->
+  <div class="modal-overlay" id="new-deck-modal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Create Flashcard Deck</h3>
+        <button class="modal-close-btn" id="close-deck-modal-btn">&times;</button>
+      </div>
+
+      <form id="new-deck-form" style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Deck Name</label>
+          <input type="text" id="deck-name-input" class="form-input" placeholder="e.g. Spanish Vocabulary or Organic Chem" required>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Short Description</label>
+          <input type="text" id="deck-desc-input" class="form-input" placeholder="e.g. Chapter 4 key terms and definitions">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.6rem; margin-top:0.5rem;">
+          <button type="button" class="btn-secondary" id="cancel-deck-modal-btn">Cancel</button>
+          <button type="submit" class="btn-primary-action" style="padding:0.6rem 1.4rem;">Create Deck</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       MODAL: CREATE CUSTOM QUIZ
+  ======================================================== -->
+  <div class="modal-overlay" id="quiz-builder-modal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:620px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Custom Quiz Builder</h3>
+        <button class="modal-close-btn" id="close-quiz-builder-btn">&times;</button>
+      </div>
+
+      <form id="custom-quiz-form" style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.35rem;">Quiz Title</label>
+          <input type="text" id="custom-quiz-title" class="form-input" placeholder="e.g. World Capitals or Biology Midterm" required>
+        </div>
+
+        <div style="border-top:1px solid var(--border-subtle); padding-top:1rem;">
+          <h4 style="font-size:0.95rem; font-weight:600; margin-bottom:0.75rem;">Question 1</h4>
+          <input type="text" id="q-text" class="form-input" placeholder="Enter Question Prompt..." required style="margin-bottom:0.75rem;">
+          
+          <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="radio" name="correct-opt" value="0" checked title="Mark as correct answer">
+              <input type="text" id="q-opt-0" class="form-input" placeholder="Option A (Correct)" required>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="radio" name="correct-opt" value="1" title="Mark as correct answer">
+              <input type="text" id="q-opt-1" class="form-input" placeholder="Option B" required>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="radio" name="correct-opt" value="2" title="Mark as correct answer">
+              <input type="text" id="q-opt-2" class="form-input" placeholder="Option C" required>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="radio" name="correct-opt" value="3" title="Mark as correct answer">
+              <input type="text" id="q-opt-3" class="form-input" placeholder="Option D" required>
+            </div>
+          </div>
+
+          <textarea id="q-explanation" class="form-textarea" rows="2" placeholder="Explanation why this is correct (Optional)"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
+          <button type="button" class="btn-secondary" id="cancel-quiz-builder-btn">Cancel</button>
+          <button type="submit" class="btn-primary-action" style="padding:0.6rem 1.4rem;">Save & Play Quiz</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="audio.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
